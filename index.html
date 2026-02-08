@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Consistency Engine</title>
@@ -7,62 +8,72 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-<header class="top-bar">
-  <div>
-    <h1>🔥 CONSISTENCY ENGINE</h1>
-    <p class="subtitle">Build discipline. Track execution.</p>
-  </div>
-
-  <nav class="nav">
-    <button data-view="daily">Daily</button>
-    <button data-view="weekly">Weekly</button>
-    <button data-view="monthly">Monthly</button>
-    <a href="blog.html" class="blog-link">Blog</a>
-  </nav>
-</header>
-
-<main class="dashboard">
-
-  <!-- DAILY -->
-  <section class="panel view daily-view active">
-    <h2>Daily Habits</h2>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Habit</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="habit-table"></tbody>
-    </table>
-
-    <div class="progress-container">
-      <div id="progress-bar"></div>
+  <header class="top-bar">
+    <div>
+      <h1>🔥 CONSISTENCY ENGINE</h1>
+      <p class="subtitle">Build discipline. Track execution.</p>
     </div>
-    <span id="progress-text"></span>
-  </section>
 
-  <!-- WEEKLY -->
-  <section class="panel view weekly-view">
-    <h2>Weekly Consistency</h2>
-    <canvas id="weeklyChart"></canvas>
-  </section>
+    <nav class="nav">
+      <button data-view="daily">Daily</button>
+      <button data-view="weekly">Weekly</button>
+      <button data-view="monthly">Monthly</button>
+      <a href="blog.html" class="blog-link">Blog</a>
+    </nav>
+  </header>
 
-  <!-- MONTHLY -->
-  <section class="panel view monthly-view">
-    <h2>2026 Calendar</h2>
-    <div id="calendar"></div>
-  </section>
+  <main class="dashboard">
 
-</main>
+    <!-- DAILY -->
+    <section class="panel view daily-view active">
+      <h2>Daily Habits</h2>
 
-<footer>
-  <div id="countdown"></div>
-</footer>
+      <table>
+        <thead>
+          <tr>
+            <th>Habit</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="habit-table"></tbody>
+      </table>
 
-<script type="module" src="script.js"></script>
+      <!-- DAILY NOTES -->
+      <div class="daily-notes">
+        <h3>📝 Daily Notes</h3>
+        <textarea id="daily-note" placeholder="Write your thoughts, learnings, reflections..."></textarea>
+        <span id="note-status"></span>
+      </div>
+
+
+      <div class="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+      <span id="progress-text"></span>
+    </section>
+
+    <!-- WEEKLY -->
+    <section class="panel view weekly-view">
+      <h2>Weekly Consistency</h2>
+      <canvas id="weeklyChart"></canvas>
+    </section>
+
+    <!-- MONTHLY -->
+    <section class="panel view monthly-view">
+      <h2>2026 Calendar</h2>
+      <div id="calendar"></div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div id="countdown"></div>
+  </footer>
+
+  <script type="module" src="script.js"></script>
 </body>
+
 </html>
