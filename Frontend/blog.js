@@ -1,5 +1,6 @@
 const editor = document.querySelector(".editor");
-const API = "http://localhost:3000/api";
+const API = "https://consistency-engine.onrender.com/api";
+
 
 async function loadBlog() {
   const res = await fetch(`${API}/blog`);

@@ -1,4 +1,4 @@
-const API = "http://localhost:3000/api";
+const API = "https://consistency-engine.onrender.com/api";
 let history = {};
 
 /* ---------- HABITS ---------- */
