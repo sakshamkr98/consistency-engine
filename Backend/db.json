@@ -1,17 +1,3 @@
 {
-  "habits": {
-    "2026-02-08": [
-      true,
-      false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false
-    ]
-  },
-  "blog": "\n    <h2>write some thing&nbsp;</h2><div>Let's write something&nbsp;</div>\n  "
+  "days": {}
 }

@@ -4,18 +4,18 @@ import fs from "fs";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DB_FILE = "./db.json";
 
 app.use(cors());
 app.use(express.json());
 
-const DB_FILE = "./db.json";
-
 /* ---------- DB HELPERS ---------- */
+
 function initDB() {
   if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(
       DB_FILE,
-      JSON.stringify({ habits: {}, blog: "" }, null, 2)
+      JSON.stringify({ days: {} }, null, 2)
     );
   }
 }
@@ -29,42 +29,75 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
+function todayDate() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function ensureDay(date) {
+  const db = readDB();
+
+  if (!db.days[date]) {
+    db.days[date] = {
+      note: "",
+      habits: []
+    };
+    writeDB(db);
+  }
+
+  return db.days[date];
+}
+
 /* ---------- HEALTH CHECK ---------- */
+
 app.get("/", (req, res) => {
-  res.json({ status: "Consistency Engine backend running 🚀" });
+  res.json({
+    status: "Consistency Engine backend running 🚀",
+    phase: "Phase 1 – Daily Notes + Habits"
+  });
 });
 
-/* ---------- HABITS ---------- */
+/* ---------- DAILY DATA ---------- */
 
-// get all habit history
-app.get("/api/history", (req, res) => {
-  const db = readDB();
-  res.json(db.habits);
+// get today
+app.get("/api/day", (req, res) => {
+  const date = todayDate();
+  const day = ensureDay(date);
+  res.json({ date, ...day });
 });
 
-// save habit history
-app.post("/api/history", (req, res) => {
+// get specific date (for calendar later)
+app.get("/api/day/:date", (req, res) => {
+  const { date } = req.params;
+  const day = ensureDay(date);
+  res.json({ date, ...day });
+});
+
+// save daily note
+app.post("/api/day/note", (req, res) => {
+  const { date, note } = req.body;
   const db = readDB();
-  db.habits = req.body;
+
+  ensureDay(date);
+  db.days[date].note = note;
+
   writeDB(db);
-  res.json({ status: "ok" });
+  res.json({ success: true });
 });
 
-/* ---------- BLOG ---------- */
-
-app.get("/api/blog", (req, res) => {
+// save daily habits
+app.post("/api/day/habits", (req, res) => {
+  const { date, habits } = req.body;
   const db = readDB();
-  res.json({ content: db.blog });
-});
 
-app.post("/api/blog", (req, res) => {
-  const db = readDB();
-  db.blog = req.body.content;
+  ensureDay(date);
+  db.days[date].habits = habits;
+
   writeDB(db);
-  res.json({ status: "saved" });
+  res.json({ success: true });
 });
 
 /* ---------- START SERVER ---------- */
+
 app.listen(PORT, () => {
   console.log(`🔥 Backend running on port ${PORT}`);
 });
