@@ -1,4 +1,4 @@
-const API = "https://consistency-engine.onrender.com/api";
+const API_BASE = "https://consistency-engine.onrender.com";
 let history = {};
 
 /* ---------- HABITS ---------- */
@@ -15,33 +15,32 @@ const habits = [
   "Write a Journal"
 ];
 
-/* ---------- DATE (LOCAL / INDIA SAFE) ---------- */
+/* ---------- DATE (LOCAL SAFE) ---------- */
 function getLocalDateKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-const today = new Date();
-const todayKey = getLocalDateKey(today);
+let today = new Date();
+let todayKey = getLocalDateKey(today);
 
+/* ---------- BACKEND ---------- */
 async function loadHistory() {
-  const res = await fetch(`${API}/history`);
+  const res = await fetch(`${API_BASE}/api/history`);
   history = await res.json();
-  history[todayKey] ??= Array(habits.length).fill(false);
 }
 
 async function saveHistory() {
-  await fetch(`${API}/history`, {
+  await fetch(`${API_BASE}/api/history`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(history)
   });
 }
 
-
-/* ---------- AUTO RESET AT 12:00 AM IST ---------- */
+/* ---------- MIDNIGHT RESET ---------- */
 function scheduleMidnightReset() {
   const now = new Date();
   const nextMidnight = new Date(
@@ -51,32 +50,19 @@ function scheduleMidnightReset() {
     0, 0, 0, 0
   );
 
-  const msUntilMidnight = nextMidnight - now;
+  setTimeout(async () => {
+    today = new Date();
+    todayKey = getLocalDateKey(today);
 
-  setTimeout(() => {
-    // New day
-    const newToday = new Date();
-    const newKey = getLocalDateKey(newToday);
+    history[todayKey] ??= Array(habits.length).fill(false);
+    await saveHistory();
 
-    // Init storage for new day
-    history[newKey] ??= Array(habits.length).fill(false);
-    localStorage.setItem("history", JSON.stringify(history));
-
-    // Update globals
-    window.today = newToday;
-    window.todayKey = newKey;
-
-    // UI refresh
     renderTable();
     updateProgress();
     renderCalendar();
-
-    // Schedule next reset
     scheduleMidnightReset();
-  }, msUntilMidnight);
+  }, nextMidnight - now);
 }
-
-
 
 /* ---------- TABLE ---------- */
 const table = document.getElementById("habit-table");
@@ -94,7 +80,8 @@ function renderTable() {
     `;
   });
 }
-  table.addEventListener("change", async e => {
+
+table.addEventListener("change", async e => {
   history[todayKey][e.target.dataset.i] = e.target.checked;
   await saveHistory();
   updateProgress();
@@ -110,27 +97,29 @@ function updateProgress() {
     `${pct}% Completed Today`;
 }
 
-/* ---------- WEEKLY (LOCAL DATE FIXED) ---------- */
-new Chart(document.getElementById("weeklyChart"), {
-  type: "bar",
-  data: {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    datasets: [{
-      data: Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = getLocalDateKey(d);
-        return history[key]?.filter(Boolean).length || 0;
-      }).reverse(),
-      backgroundColor: "#ff7a18"
-    }]
-  },
-  options: {
-    plugins: { legend: { display: false } }
-  }
-});
+/* ---------- WEEKLY CHART ---------- */
+function renderWeeklyChart() {
+  new Chart(document.getElementById("weeklyChart"), {
+    type: "bar",
+    data: {
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      datasets: [{
+        data: Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = getLocalDateKey(d);
+          return history[key]?.filter(Boolean).length || 0;
+        }).reverse(),
+        backgroundColor: "#ff7a18"
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } }
+    }
+  });
+}
 
-/* ---------- CALENDAR (LOCAL DATE FIXED) ---------- */
+/* ---------- CALENDAR ---------- */
 const cal = document.getElementById("calendar");
 
 function renderCalendar() {
@@ -181,9 +170,7 @@ document.querySelectorAll(".nav button").forEach(btn => {
 const target = new Date("2026-06-01T23:59:59");
 
 setInterval(() => {
-  const now = new Date();
-  let diff = Math.max(0, target - now);
-
+  let diff = Math.max(0, target - new Date());
   const d = Math.floor(diff / 86400000);
   diff %= 86400000;
   const h = Math.floor(diff / 3600000);
@@ -198,8 +185,12 @@ setInterval(() => {
 /* ---------- INIT ---------- */
 (async function init() {
   await loadHistory();
+  history[todayKey] ??= Array(habits.length).fill(false);
+  await saveHistory();
+
   renderTable();
   updateProgress();
   renderCalendar();
+  renderWeeklyChart();
   scheduleMidnightReset();
 })();
