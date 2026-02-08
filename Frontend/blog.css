@@ -1,0 +1,14 @@
+.blog-panel {
+  max-width: 800px;
+  margin: auto;
+}
+
+.editor {
+  outline: none;
+  line-height: 1.7;
+}
+
+.editor h2 {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Consistency Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header class="top-bar">
+  <div>
+    <h1>🔥 CONSISTENCY ENGINE</h1>
+    <p class="subtitle">Build discipline. Track execution.</p>
+  </div>
+
+  <nav class="nav">
+    <button data-view="daily">Daily</button>
+    <button data-view="weekly">Weekly</button>
+    <button data-view="monthly">Monthly</button>
+    <a href="blog.html" class="blog-link">Blog</a>
+  </nav>
+</header>
+
+<main class="dashboard">
+
+  <!-- DAILY -->
+  <section class="panel view daily-view active">
+    <h2>Daily Habits</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Habit</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="habit-table"></tbody>
+    </table>
+
+    <div class="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+    <span id="progress-text"></span>
+  </section>
+
+  <!-- WEEKLY -->
+  <section class="panel view weekly-view">
+    <h2>Weekly Consistency</h2>
+    <canvas id="weeklyChart"></canvas>
+  </section>
+
+  <!-- MONTHLY -->
+  <section class="panel view monthly-view">
+    <h2>2026 Calendar</h2>
+    <div id="calendar"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div id="countdown"></div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
