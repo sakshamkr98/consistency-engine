@@ -15,7 +15,7 @@ const habits = [
   "Write a Journal"
 ];
 
-/* ---------- DATE (LOCAL SAFE) ---------- */
+/* ---------- DATE ---------- */
 function getLocalDateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -23,8 +23,8 @@ function getLocalDateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-let today = new Date();
-let todayKey = getLocalDateKey(today);
+const today = new Date();
+const todayKey = getLocalDateKey(today);
 
 /* ---------- BACKEND ---------- */
 async function loadHistory() {
@@ -38,30 +38,6 @@ async function saveHistory() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(history)
   });
-}
-
-/* ---------- MIDNIGHT RESET ---------- */
-function scheduleMidnightReset() {
-  const now = new Date();
-  const nextMidnight = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-    0, 0, 0, 0
-  );
-
-  setTimeout(async () => {
-    today = new Date();
-    todayKey = getLocalDateKey(today);
-
-    history[todayKey] ??= Array(habits.length).fill(false);
-    await saveHistory();
-
-    renderTable();
-    updateProgress();
-    renderCalendar();
-    scheduleMidnightReset();
-  }, nextMidnight - now);
 }
 
 /* ---------- TABLE ---------- */
@@ -97,28 +73,6 @@ function updateProgress() {
     `${pct}% Completed Today`;
 }
 
-/* ---------- WEEKLY CHART ---------- */
-function renderWeeklyChart() {
-  new Chart(document.getElementById("weeklyChart"), {
-    type: "bar",
-    data: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      datasets: [{
-        data: Array.from({ length: 7 }, (_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const key = getLocalDateKey(d);
-          return history[key]?.filter(Boolean).length || 0;
-        }).reverse(),
-        backgroundColor: "#ff7a18"
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
 /* ---------- CALENDAR ---------- */
 const cal = document.getElementById("calendar");
 
@@ -135,7 +89,6 @@ function renderCalendar() {
     monthDiv.innerHTML = `<h3>${m} 2026</h3>`;
 
     const daysInMonth = new Date(2026, mi + 1, 0).getDate();
-
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(2026, mi, d);
       const key = getLocalDateKey(date);
@@ -143,7 +96,6 @@ function renderCalendar() {
       const day = document.createElement("div");
       day.className = "day";
 
-      if (date < today) day.classList.add("past");
       if (key === todayKey) day.classList.add("today");
       if (history[key]?.some(Boolean)) day.classList.add("done");
 
@@ -155,33 +107,6 @@ function renderCalendar() {
   });
 }
 
-/* ---------- NAV ---------- */
-document.querySelectorAll(".nav button").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".view")
-      .forEach(v => v.classList.remove("active"));
-    document
-      .querySelector(`.${btn.dataset.view}-view`)
-      .classList.add("active");
-  };
-});
-
-/* ---------- COUNTDOWN ---------- */
-const target = new Date("2026-06-01T23:59:59");
-
-setInterval(() => {
-  let diff = Math.max(0, target - new Date());
-  const d = Math.floor(diff / 86400000);
-  diff %= 86400000;
-  const h = Math.floor(diff / 3600000);
-  diff %= 3600000;
-  const m = Math.floor(diff / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-
-  document.getElementById("countdown").textContent =
-    `${d} DAYS • ${h} HRS • ${m} MIN • ${s} SEC LEFT IN JUNE 2026`;
-}, 1000);
-
 /* ---------- INIT ---------- */
 (async function init() {
   await loadHistory();
@@ -191,6 +116,4 @@ setInterval(() => {
   renderTable();
   updateProgress();
   renderCalendar();
-  renderWeeklyChart();
-  scheduleMidnightReset();
 })();

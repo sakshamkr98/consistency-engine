@@ -4,18 +4,18 @@ import fs from "fs";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_FILE = "./db.json";
 
 app.use(cors());
 app.use(express.json());
 
-/* ---------- DB HELPERS ---------- */
+const DB_FILE = "./db.json";
 
+/* ---------- INIT DB ---------- */
 function initDB() {
   if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(
       DB_FILE,
-      JSON.stringify({ days: {} }, null, 2)
+      JSON.stringify({ habits: {} }, null, 2)
     );
   }
 }
@@ -29,75 +29,25 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-function todayDate() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function ensureDay(date) {
-  const db = readDB();
-
-  if (!db.days[date]) {
-    db.days[date] = {
-      note: "",
-      habits: []
-    };
-    writeDB(db);
-  }
-
-  return db.days[date];
-}
-
-/* ---------- HEALTH CHECK ---------- */
-
+/* ---------- HEALTH ---------- */
 app.get("/", (req, res) => {
-  res.json({
-    status: "Consistency Engine backend running 🚀",
-    phase: "Phase 1 – Daily Notes + Habits"
-  });
+  res.json({ status: "Backend running" });
 });
 
-/* ---------- DAILY DATA ---------- */
-
-// get today
-app.get("/api/day", (req, res) => {
-  const date = todayDate();
-  const day = ensureDay(date);
-  res.json({ date, ...day });
-});
-
-// get specific date (for calendar later)
-app.get("/api/day/:date", (req, res) => {
-  const { date } = req.params;
-  const day = ensureDay(date);
-  res.json({ date, ...day });
-});
-
-// save daily note
-app.post("/api/day/note", (req, res) => {
-  const { date, note } = req.body;
+/* ---------- HABITS ---------- */
+app.get("/api/history", (req, res) => {
   const db = readDB();
-
-  ensureDay(date);
-  db.days[date].note = note;
-
-  writeDB(db);
-  res.json({ success: true });
+  res.json(db.habits);
 });
 
-// save daily habits
-app.post("/api/day/habits", (req, res) => {
-  const { date, habits } = req.body;
+app.post("/api/history", (req, res) => {
   const db = readDB();
-
-  ensureDay(date);
-  db.days[date].habits = habits;
-
+  db.habits = req.body;
   writeDB(db);
-  res.json({ success: true });
+  res.json({ status: "saved" });
 });
 
-/* ---------- START SERVER ---------- */
-
+/* ---------- START ---------- */
 app.listen(PORT, () => {
   console.log(`🔥 Backend running on port ${PORT}`);
 });
