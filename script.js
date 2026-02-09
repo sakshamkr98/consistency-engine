@@ -1,4 +1,5 @@
 const API_BASE = "https://consistency-engine.onrender.com";
+let history = {};
 
 /* ---------- HABITS ---------- */
 const habits = [
@@ -25,58 +26,17 @@ function getLocalDateKey(date = new Date()) {
 let today = new Date();
 let todayKey = getLocalDateKey(today);
 
-/* ---------- STATE ---------- */
-let todayHabits = Array(habits.length).fill(false);
-
-/* ---------- LOAD TODAY FROM BACKEND ---------- */
-async function loadToday() {
-  const res = await fetch(`${API_BASE}/api/day`);
-  const data = await res.json();
-
-  todayHabits = data.habits?.length
-    ? data.habits
-    : Array(habits.length).fill(false);
-
-  const noteBox = document.getElementById("daily-note");
-  if (noteBox) noteBox.value = data.note || "";
-
-  renderTable();
-  updateProgress();
+/* ---------- BACKEND ---------- */
+async function loadHistory() {
+  const res = await fetch(`${API_BASE}/api/history`);
+  history = await res.json();
 }
 
-/* ---------- SAVE HABITS ---------- */
-async function saveHabits() {
-  await fetch(`${API_BASE}/api/day/habits`, {
+async function saveHistory() {
+  await fetch(`${API_BASE}/api/history`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      date: todayKey,
-      habits: todayHabits
-    })
-  });
-}
-
-/* ---------- AUTOSAVE NOTE ---------- */
-let noteTimer = null;
-
-function initNotes() {
-  const noteBox = document.getElementById("daily-note");
-  const status = document.getElementById("note-status");
-  if (!noteBox) return;
-
-  noteBox.addEventListener("input", e => {
-    clearTimeout(noteTimer);
-    noteTimer = setTimeout(async () => {
-      await fetch(`${API_BASE}/api/day/note`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: todayKey,
-          note: e.target.value
-        })
-      });
-      if (status) status.textContent = "Saved ✔";
-    }, 500);
+    body: JSON.stringify(history)
   });
 }
 
@@ -93,8 +53,9 @@ function scheduleMidnightReset() {
   setTimeout(async () => {
     today = new Date();
     todayKey = getLocalDateKey(today);
-    todayHabits = Array(habits.length).fill(false);
-    await saveHabits();
+
+    history[todayKey] ??= Array(habits.length).fill(false);
+    await saveHistory();
 
     renderTable();
     updateProgress();
@@ -108,7 +69,7 @@ const table = document.getElementById("habit-table");
 
 function renderTable() {
   table.innerHTML = "";
-  todayHabits.forEach((v, i) => {
+  history[todayKey].forEach((v, i) => {
     table.innerHTML += `
       <tr>
         <td>${habits[i]}</td>
@@ -121,15 +82,15 @@ function renderTable() {
 }
 
 table.addEventListener("change", async e => {
-  todayHabits[e.target.dataset.i] = e.target.checked;
-  await saveHabits();
+  history[todayKey][e.target.dataset.i] = e.target.checked;
+  await saveHistory();
   updateProgress();
   renderCalendar();
 });
 
 /* ---------- PROGRESS ---------- */
 function updateProgress() {
-  const done = todayHabits.filter(Boolean).length;
+  const done = history[todayKey].filter(Boolean).length;
   const pct = Math.round((done / habits.length) * 100);
   document.getElementById("progress-bar").style.width = pct + "%";
   document.getElementById("progress-text").textContent =
@@ -146,12 +107,15 @@ function renderWeeklyChart() {
         data: Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - i);
-          return todayHabits.filter(Boolean).length;
+          const key = getLocalDateKey(d);
+          return history[key]?.filter(Boolean).length || 0;
         }).reverse(),
         backgroundColor: "#ff7a18"
       }]
     },
-    options: { plugins: { legend: { display: false } } }
+    options: {
+      plugins: { legend: { display: false } }
+    }
   });
 }
 
@@ -170,15 +134,23 @@ function renderCalendar() {
     monthDiv.className = "month";
     monthDiv.innerHTML = `<h3>${m} 2026</h3>`;
 
-    const days = new Date(2026, mi + 1, 0).getDate();
-    for (let d = 1; d <= days; d++) {
+    const daysInMonth = new Date(2026, mi + 1, 0).getDate();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(2026, mi, d);
+      const key = getLocalDateKey(date);
+
       const day = document.createElement("div");
       day.className = "day";
-      if (d === today.getDate() && mi === today.getMonth())
-        day.classList.add("today");
+
+      if (date < today) day.classList.add("past");
+      if (key === todayKey) day.classList.add("today");
+      if (history[key]?.some(Boolean)) day.classList.add("done");
+
       day.textContent = d;
       monthDiv.appendChild(day);
     }
+
     cal.appendChild(monthDiv);
   });
 }
@@ -196,6 +168,7 @@ document.querySelectorAll(".nav button").forEach(btn => {
 
 /* ---------- COUNTDOWN ---------- */
 const target = new Date("2026-06-01T23:59:59");
+
 setInterval(() => {
   let diff = Math.max(0, target - new Date());
   const d = Math.floor(diff / 86400000);
@@ -211,8 +184,12 @@ setInterval(() => {
 
 /* ---------- INIT ---------- */
 (async function init() {
-  await loadToday();
-  initNotes();
+  await loadHistory();
+  history[todayKey] ??= Array(habits.length).fill(false);
+  await saveHistory();
+
+  renderTable();
+  updateProgress();
   renderCalendar();
   renderWeeklyChart();
   scheduleMidnightReset();
