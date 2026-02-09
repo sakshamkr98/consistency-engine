@@ -194,3 +194,24 @@ footer {
   body { padding: 16px; }
   .top-bar { flex-direction: column; }
 }
+
+.daily-notes {
+  margin-top: 20px;
+}
+
+.daily-notes textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #0f0f0f;
+  color: #fff;
+  resize: vertical;
+}
+
+#note-status {
+  font-size: 12px;
+  opacity: 0.7;
+}
