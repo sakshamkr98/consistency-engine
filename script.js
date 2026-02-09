@@ -15,7 +15,7 @@ const habits = [
   "Write a Journal"
 ];
 
-/* ---------- DATE (LOCAL SAFE) ---------- */
+/* ---------- DATE HELPER ---------- */
 function getLocalDateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -40,50 +40,26 @@ async function saveHistory() {
   });
 }
 
-/* ---------- MIDNIGHT RESET ---------- */
-function scheduleMidnightReset() {
-  const now = new Date();
-  const nextMidnight = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-    0, 0, 0, 0
-  );
-
-  setTimeout(async () => {
-    today = new Date();
-    todayKey = getLocalDateKey(today);
-
-    history[todayKey] ??= Array(habits.length).fill(false);
-    await saveHistory();
-
-    renderTable();
-    updateProgress();
-    renderCalendar();
-    scheduleMidnightReset();
-  }, nextMidnight - now);
-}
-
 /* ---------- TABLE ---------- */
 const table = document.getElementById("habit-table");
 
 function renderTable() {
   if (!history[todayKey]) history[todayKey] = Array(habits.length).fill(false);
+
   table.innerHTML = "";
   history[todayKey].forEach((v, i) => {
     table.innerHTML += `
       <tr>
         <td>${habits[i]}</td>
-        <td>
-          <input type="checkbox" ${v ? "checked" : ""} data-i="${i}">
-        </td>
+        <td><input type="checkbox" data-i="${i}" ${v ? "checked" : ""}></td>
       </tr>
     `;
   });
 }
 
 table.addEventListener("change", async e => {
-  history[todayKey][e.target.dataset.i] = e.target.checked;
+  const i = e.target.dataset.i;
+  history[todayKey][i] = e.target.checked;
   await saveHistory();
   updateProgress();
   renderCalendar();
@@ -94,8 +70,7 @@ function updateProgress() {
   const done = history[todayKey].filter(Boolean).length;
   const pct = Math.round((done / habits.length) * 100);
   document.getElementById("progress-bar").style.width = pct + "%";
-  document.getElementById("progress-text").textContent =
-    `${pct}% Completed Today`;
+  document.getElementById("progress-text").textContent = `${pct}% Completed Today`;
 }
 
 /* ---------- WEEKLY CHART ---------- */
@@ -153,14 +128,11 @@ function renderCalendar() {
   });
 }
 
-/* ---------- NAV ---------- */
+/* ---------- NAVIGATION ---------- */
 document.querySelectorAll(".nav button").forEach(btn => {
   btn.onclick = () => {
-    document.querySelectorAll(".view")
-      .forEach(v => v.classList.remove("active"));
-    document
-      .querySelector(`.${btn.dataset.view}-view`)
-      .classList.add("active");
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.querySelector(`.${btn.dataset.view}-view`).classList.add("active");
   };
 });
 
@@ -175,17 +147,31 @@ setInterval(() => {
   diff %= 3600000;
   const m = Math.floor(diff / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-
   document.getElementById("countdown").textContent =
     `${d} DAYS • ${h} HRS • ${m} MIN • ${s} SEC LEFT IN JUNE 2026`;
 }, 1000);
+
+/* ---------- MIDNIGHT RESET ---------- */
+function scheduleMidnightReset() {
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  setTimeout(async () => {
+    today = new Date();
+    todayKey = getLocalDateKey(today);
+    history[todayKey] ??= Array(habits.length).fill(false);
+    await saveHistory();
+    renderTable();
+    updateProgress();
+    renderCalendar();
+    renderWeeklyChart();
+    scheduleMidnightReset();
+  }, nextMidnight - now);
+}
 
 /* ---------- INIT ---------- */
 (async function init() {
   await loadHistory();
   history[todayKey] ??= Array(habits.length).fill(false);
-  await saveHistory();
-
   renderTable();
   updateProgress();
   renderCalendar();
