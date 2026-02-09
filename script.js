@@ -68,6 +68,7 @@ function scheduleMidnightReset() {
 const table = document.getElementById("habit-table");
 
 function renderTable() {
+  if (!history[todayKey]) history[todayKey] = Array(habits.length).fill(false);
   table.innerHTML = "";
   history[todayKey].forEach((v, i) => {
     table.innerHTML += `
@@ -113,9 +114,7 @@ function renderWeeklyChart() {
         backgroundColor: "#ff7a18"
       }]
     },
-    options: {
-      plugins: { legend: { display: false } }
-    }
+    options: { plugins: { legend: { display: false } } }
   });
 }
 
@@ -135,7 +134,6 @@ function renderCalendar() {
     monthDiv.innerHTML = `<h3>${m} 2026</h3>`;
 
     const daysInMonth = new Date(2026, mi + 1, 0).getDate();
-
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(2026, mi, d);
       const key = getLocalDateKey(date);
