@@ -35,11 +35,14 @@ app.get("/", (req, res) => {
 });
 
 /* ---------- HABITS ---------- */
+
+// get all habit history
 app.get("/api/history", (req, res) => {
   const db = readDB();
   res.json(db.habits);
 });
 
+// save habit history
 app.post("/api/history", (req, res) => {
   const db = readDB();
   db.habits = req.body;
@@ -48,6 +51,7 @@ app.post("/api/history", (req, res) => {
 });
 
 /* ---------- BLOG ---------- */
+
 app.get("/api/blog", (req, res) => {
   const db = readDB();
   res.json({ content: db.blog });
