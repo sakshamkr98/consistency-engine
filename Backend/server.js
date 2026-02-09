@@ -10,12 +10,12 @@ app.use(express.json());
 
 const DB_FILE = "./db.json";
 
-/* ---------- INIT DB ---------- */
+/* ---------- DB HELPERS ---------- */
 function initDB() {
   if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(
       DB_FILE,
-      JSON.stringify({ habits: {} }, null, 2)
+      JSON.stringify({ habits: {}, blog: "" }, null, 2)
     );
   }
 }
@@ -29,9 +29,9 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-/* ---------- HEALTH ---------- */
+/* ---------- HEALTH CHECK ---------- */
 app.get("/", (req, res) => {
-  res.json({ status: "Backend running" });
+  res.json({ status: "Consistency Engine backend running 🚀" });
 });
 
 /* ---------- HABITS ---------- */
@@ -44,10 +44,23 @@ app.post("/api/history", (req, res) => {
   const db = readDB();
   db.habits = req.body;
   writeDB(db);
+  res.json({ status: "ok" });
+});
+
+/* ---------- BLOG ---------- */
+app.get("/api/blog", (req, res) => {
+  const db = readDB();
+  res.json({ content: db.blog });
+});
+
+app.post("/api/blog", (req, res) => {
+  const db = readDB();
+  db.blog = req.body.content;
+  writeDB(db);
   res.json({ status: "saved" });
 });
 
-/* ---------- START ---------- */
+/* ---------- START SERVER ---------- */
 app.listen(PORT, () => {
   console.log(`🔥 Backend running on port ${PORT}`);
 });
